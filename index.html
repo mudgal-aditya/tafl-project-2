@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFG Simplifier</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="site-header">
+    <h1>CFG Simplifier</h1>
+    <p>Simplify context-free grammars step by step</p>
+  </div>
+
+  <div class="card">
+    <label class="card-label" for="grammarInput">Grammar input</label>
+    <textarea id="grammarInput">S -> AB | C
+A -> aA | ε
+B -> b
+C -> D
+D -> ε
+E -> aE</textarea>
+  </div>
+
+  <div class="card">
+    <span class="card-label">Choose a step</span>
+    <div class="steps">
+      <button class="step-btn" id="btn1" onclick="runStep(1)">
+        <span class="step-num">1</span>
+        <span>
+          <span class="step-text-main">Remove useless symbols</span>
+          <span class="step-text-sub">Unreachable & non-generating</span>
+        </span>
+      </button>
+
+      <button class="step-btn" id="btn2" onclick="runStep(2)">
+        <span class="step-num">2</span>
+        <span>
+          <span class="step-text-main">Remove null productions</span>
+          <span class="step-text-sub">Eliminate ε-productions</span>
+        </span>
+      </button>
+
+      <button class="step-btn" id="btn3" onclick="runStep(3)">
+        <span class="step-num">3</span>
+        <span>
+          <span class="step-text-main">Remove unit productions</span>
+          <span class="step-text-sub">Eliminate A → B rules</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="output-card">
+    <div class="output-header">
+      <span class="output-title">Output</span>
+      <span class="output-tag" id="outputTag">waiting</span>
+    </div>
+    <pre id="output"><span class="placeholder">Select a step above to see the simplified grammar.</span></pre>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
