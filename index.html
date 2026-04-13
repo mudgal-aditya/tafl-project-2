@@ -1,70 +1,921 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CFG Simplifier</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFG Simplifier</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:#FAF8F4;color:#2C2A24;min-height:100vh;}
 
+/* ── NAV ── */
+nav{background:#fff;border-bottom:1px solid #E8E5DF;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;}
+.nav-brand{font-size:15px;font-weight:600;color:#2C2A24;}
+.nav-brand span{color:#B4B2A9;font-weight:400;}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{background:none;border:none;padding:6px 14px;border-radius:6px;font-size:13px;color:#888780;cursor:pointer;transition:all 0.15s;}
+.nav-tab:hover{background:#F1EFE8;color:#2C2A24;}
+.nav-tab.active{background:#F1EFE8;color:#2C2A24;font-weight:500;}
+
+/* ── LAYOUT ── */
+.page{max-width:980px;margin:0 auto;padding:2rem 1.5rem;}
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid #D3D1C7;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.card-label{display:block;font-size:11px;font-weight:600;color:#B4B2A9;letter-spacing:0.7px;text-transform:uppercase;margin-bottom:10px;}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:1.8rem 1rem 1.4rem;}
+.hero h1{font-size:23px;font-weight:500;color:#2C2A24;letter-spacing:-0.3px;margin-bottom:5px;}
+.hero p{font-size:13px;color:#888780;max-width:480px;margin:0 auto 1.1rem;}
+.hero-tags{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;}
+.htag{font-size:11px;background:#F1EFE8;color:#5F5E5A;padding:3px 10px;border-radius:20px;border:1px solid #E8E5DF;}
+
+/* ── TEXTAREA ── */
+textarea{width:100%;height:118px;font-family:"Courier New",monospace;font-size:13px;background:#FAF8F4;color:#2C2A24;border:1px solid #D3D1C7;border-radius:8px;padding:10px 12px;resize:vertical;line-height:1.75;outline:none;transition:border-color 0.15s;}
+textarea:focus{border-color:#888780;}
+
+/* ── EXAMPLE BUTTONS ── */
+.examples-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.ex-btn{font-size:12px;background:#FAF8F4;border:1px solid #D3D1C7;border-radius:6px;padding:4px 11px;cursor:pointer;color:#5F5E5A;transition:all 0.15s;}
+.ex-btn:hover{background:#F1EFE8;border-color:#B4B2A9;color:#2C2A24;}
+
+/* ── STEP BUTTONS ── */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:580px){.steps-grid{grid-template-columns:1fr;}}
+.step-btn{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid #D3D1C7;border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;transition:background 0.18s,border-color 0.18s,transform 0.1s;width:100%;}
+.step-btn:hover{background:#F1EFE8;border-color:#B4B2A9;}
+.step-btn:active{transform:scale(0.98);}
+.step-btn.active{background:#2C2C2A;border-color:#2C2C2A;}
+.step-num{width:26px;height:26px;border-radius:50%;background:#F1EFE8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#888780;flex-shrink:0;transition:background 0.18s,color 0.18s;}
+.step-btn.active .step-num{background:#444441;color:#F1EFE8;}
+.step-text-main{display:block;font-size:13px;font-weight:500;color:#2C2A24;transition:color 0.18s;}
+.step-btn.active .step-text-main{color:#F1EFE8;}
+.step-text-sub{display:block;font-size:11px;color:#B4B2A9;margin-top:2px;line-height:1.4;}
+.step-btn.active .step-text-sub{color:#888780;}
+
+/* ── ACTION ROW ── */
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.btn-primary{background:#2C2C2A;color:#F1EFE8;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.15s,transform 0.1s;}
+.btn-primary:hover{background:#444441;}
+.btn-primary:active{transform:scale(0.97);}
+.btn-secondary{background:#fff;color:#444441;border:1px solid #D3D1C7;border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;transition:all 0.15s;}
+.btn-secondary:hover{background:#F1EFE8;}
+
+/* ── OUTPUT CARD ── */
+.output-card{background:#fff;border:1px solid #D3D1C7;border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.output-header{padding:10px 16px;border-bottom:1px solid #F1EFE8;display:flex;align-items:center;justify-content:space-between;}
+.output-title{font-size:11px;font-weight:600;color:#B4B2A9;letter-spacing:0.6px;text-transform:uppercase;}
+.output-tag{font-size:11px;background:#F1EFE8;color:#888780;padding:3px 10px;border-radius:20px;transition:background 0.3s,color 0.3s;}
+.output-tag.done{background:#DCFCE7;color:#14532D;}
+#output{font-family:"Courier New",monospace;font-size:13px;color:#444441;padding:1.2rem 1.5rem;line-height:1.95;min-height:76px;white-space:pre-wrap;word-break:break-word;}
+.placeholder{color:#C4C2BB;font-style:italic;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;}
+
+/* ── CHIPS ── */
+.chip{display:inline-block;font-size:12px;padding:3px 9px;border-radius:20px;font-family:"Courier New",monospace;margin:2px;}
+.chip.nullable{background:#FEF9C3;color:#713F12;border:1px solid #FDE68A;}
+.chip.removed{background:#FEE2E2;color:#7F1D1D;border:1px solid #FECACA;}
+.chip.kept{background:#DCFCE7;color:#14532D;border:1px solid #BBF7D0;}
+.chip.new{background:#DBEAFE;color:#1E3A5F;border:1px solid #BFDBFE;}
+.chip.neutral{background:#F1EFE8;color:#5F5E5A;border:1px solid #D3D1C7;}
+
+/* ══════════════════════════════════════════
+   INTEGRATED TRACE PANEL
+   ══════════════════════════════════════════ */
+#tracePanel{margin-top:0;}
+
+/* Each step trace card starts hidden, animates in */
+.trace-block{
+  background:#fff;
+  border:1px solid #D3D1C7;
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:1rem;
+  /* animation state: hidden by default */
+  opacity:0;
+  transform:translateY(18px);
+  max-height:0;
+  pointer-events:none;
+  transition:
+    opacity 0.38s ease,
+    transform 0.38s ease,
+    max-height 0.5s ease,
+    margin-bottom 0.3s ease,
+    border-color 0.3s ease;
+}
+.trace-block.revealed{
+  opacity:1;
+  transform:translateY(0);
+  max-height:2000px;
+  pointer-events:auto;
+  margin-bottom:1rem;
+}
+
+/* Header bands */
+.tb-header{padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F1EFE8;}
+.tb-header.s0{background:#F1EFE8;}
+.tb-header.s1{background:#FEF9C3;}
+.tb-header.s2{background:#DCFCE7;}
+.tb-header.s3{background:#DBEAFE;}
+.tb-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.tb-badge.s0{background:#D3D1C7;color:#5F5E5A;}
+.tb-badge.s1{background:#FDE68A;color:#854D0E;}
+.tb-badge.s2{background:#BBF7D0;color:#14532D;}
+.tb-badge.s3{background:#BFDBFE;color:#1E3A5F;}
+.tb-title{font-size:13px;font-weight:600;color:#2C2A24;}
+.tb-meta{font-size:12px;color:#888780;margin-left:auto;white-space:nowrap;}
+
+/* Body */
+.tb-body{padding:1rem 1.5rem;}
+.tb-grammar{font-family:"Courier New",monospace;font-size:13px;color:#444441;line-height:1.95;white-space:pre-wrap;}
+
+/* Divider */
+.tb-div{height:1px;background:#F1EFE8;margin:1rem 0;}
+
+/* Finding rows — staggered animation */
+.tb-findings{display:flex;flex-direction:column;gap:7px;}
+.finding{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:9px 11px;background:#FAF8F4;
+  border-radius:8px;border:1px solid #E8E5DF;
+  opacity:0;transform:translateX(-10px);
+  transition:opacity 0.3s ease,transform 0.3s ease;
+}
+.finding.shown{opacity:1;transform:translateX(0);}
+.finding.success{background:#F0FDF4;border-color:#BBF7D0;}
+.finding.warn{background:#FFFBEB;border-color:#FDE68A;}
+.fi-icon{font-size:12px;flex-shrink:0;margin-top:1px;width:18px;text-align:center;}
+.fi-text{font-size:13px;color:#5F5E5A;line-height:1.55;}
+.fi-text strong{color:#2C2A24;font-weight:600;}
+.fi-text code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-family:"Courier New",monospace;font-size:12px;}
+.fi-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+
+/* Before / After diff */
+.diff-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:500px){.diff-row{grid-template-columns:1fr;}}
+.diff-box{border-radius:8px;overflow:hidden;border:1px solid #E8E5DF;}
+.diff-head{padding:6px 10px;font-size:11px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;}
+.diff-head.before{background:#FEF2F2;color:#7F1D1D;}
+.diff-head.after{background:#F0FDF4;color:#14532D;}
+.diff-body{padding:9px 11px;font-family:"Courier New",monospace;font-size:12px;line-height:1.9;background:#FAF8F4;white-space:pre-wrap;min-height:40px;}
+
+/* Expansion rows */
+.expand-row{font-family:"Courier New",monospace;font-size:12px;color:#5F5E5A;margin-bottom:3px;line-height:1.5;}
+.expand-arrow{color:#B4B2A9;font-family:"Segoe UI",sans-serif;font-size:12px;margin:0 6px;}
+
+/* ── THEORY TAB ── */
+.theory-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:600px){.theory-grid{grid-template-columns:1fr;}}
+.theory-card{background:#fff;border:1px solid #D3D1C7;border-radius:12px;padding:1.25rem 1.5rem;}
+.theory-card h3{font-size:14px;font-weight:600;color:#2C2A24;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.t-num{width:22px;height:22px;border-radius:50%;background:#F1EFE8;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#888780;flex-shrink:0;}
+.theory-card p{font-size:13px;color:#5F5E5A;line-height:1.7;margin-bottom:10px;}
+.theory-card ul{font-size:13px;color:#5F5E5A;line-height:1.8;padding-left:1.2rem;}
+.algo-box{background:#FAF8F4;border:1px solid #E8E5DF;border-radius:8px;padding:10px 12px;font-size:12px;font-family:"Courier New",monospace;color:#444441;line-height:1.85;margin-top:8px;}
+.theory-full{grid-column:1/-1;}
+.def-box{background:#F0FDF4;border-left:3px solid #4ADE80;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#14532D;line-height:1.6;margin-bottom:10px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:580px){.two-col{grid-template-columns:1fr;}}
+
+/* ── KEYFRAME for grammar text fade-in ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.fade-in{animation:fadeIn 0.35s ease forwards;}
+</style>
+</head>
 <body>
 
-<div class="container">
+<nav>
+  <div class="nav-brand">CFG Simplifier <span>/ Grammar Tool</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('simplifier',this)">Simplifier</button>
+    <button class="nav-tab" onclick="showTab('theory',this)">Theory</button>
+  </div>
+</nav>
 
-  <div class="site-header">
+<!-- ══════════════════════════════════════════
+     SIMPLIFIER TAB
+     ══════════════════════════════════════════ -->
+<div id="tab-simplifier" class="tab-section active">
+<div class="page">
+
+  <div class="hero">
     <h1>CFG Simplifier</h1>
-    <p>Simplify context-free grammars step by step</p>
+    <p>Enter a grammar, pick a step — the output and a full annotated trace appear together instantly.</p>
+    <div class="hero-tags">
+      <span class="htag">Useless Symbol Removal</span>
+      <span class="htag">Null Production Elimination</span>
+      <span class="htag">Unit Production Elimination</span>
+    </div>
   </div>
 
+  <!-- Input -->
   <div class="card">
-    <label class="card-label" for="grammarInput">Grammar input</label>
-    <textarea id="grammarInput">S -> AB | C
+    <label class="card-label" for="grammarInput">Grammar Input</label>
+    <textarea id="grammarInput">S -> AB | a
 A -> aA | ε
-B -> b
-C -> D
-D -> ε
-E -> aE</textarea>
+B -> b</textarea>
+    <div class="examples-row">
+      <span style="font-size:12px;color:#C4C2BB;align-self:center;">Examples:</span>
+      <button class="ex-btn" onclick="loadExample(0)">Basic (nullable)</button>
+      <button class="ex-btn" onclick="loadExample(1)">Unit productions</button>
+      <button class="ex-btn" onclick="loadExample(2)">Useless symbols</button>
+      <button class="ex-btn" onclick="loadExample(3)">Complex</button>
+    </div>
   </div>
 
+  <!-- Steps -->
   <div class="card">
-    <span class="card-label">Choose a step</span>
-    <div class="steps">
+    <span class="card-label">Apply a Simplification Step</span>
+    <div class="steps-grid">
       <button class="step-btn" id="btn1" onclick="runStep(1)">
         <span class="step-num">1</span>
         <span>
-          <span class="step-text-main">Remove useless symbols</span>
-          <span class="step-text-sub">Unreachable & non-generating</span>
+          <span class="step-text-main">Remove Useless Symbols</span>
+          <span class="step-text-sub">Non-generating &amp; unreachable variables</span>
         </span>
       </button>
-
       <button class="step-btn" id="btn2" onclick="runStep(2)">
         <span class="step-num">2</span>
         <span>
-          <span class="step-text-main">Remove null productions</span>
-          <span class="step-text-sub">Eliminate ε-productions</span>
+          <span class="step-text-main">Remove Null Productions</span>
+          <span class="step-text-sub">Eliminate ε-rules and rewrite productions</span>
         </span>
       </button>
-
       <button class="step-btn" id="btn3" onclick="runStep(3)">
         <span class="step-num">3</span>
         <span>
-          <span class="step-text-main">Remove unit productions</span>
-          <span class="step-text-sub">Eliminate A → B rules</span>
+          <span class="step-text-main">Remove Unit Productions</span>
+          <span class="step-text-sub">Eliminate single-variable rules A → B</span>
         </span>
       </button>
     </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="runAllSteps()">▶ Run All Steps</button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
   </div>
 
+  <!-- Output -->
   <div class="output-card">
     <div class="output-header">
-      <span class="output-title">Output</span>
+      <span class="output-title">Simplified Grammar</span>
       <span class="output-tag" id="outputTag">waiting</span>
     </div>
-    <pre id="output"><span class="placeholder">Select a step above to see the simplified grammar.</span></pre>
+    <pre id="output"><span class="placeholder">Select a step above, or click "Run All Steps".</span></pre>
   </div>
 
+  <!-- ── INTEGRATED TRACE PANEL ── -->
+  <div id="tracePanel"></div>
+
+</div>
 </div>
 
-<script src="script.js"></script>
+<!-- ══════════════════════════════════════════
+     THEORY TAB
+     ══════════════════════════════════════════ -->
+<div id="tab-theory" class="tab-section">
+<div class="page">
+
+  <div class="hero">
+    <h1>Theory &amp; Concepts</h1>
+    <p>Formal definitions and algorithms behind each grammar simplification step.</p>
+  </div>
+
+  <div class="theory-grid">
+
+    <div class="theory-card theory-full">
+      <h3>What is a Context-Free Grammar?</h3>
+      <div class="def-box">A CFG is a 4-tuple G = (V, Σ, R, S) where V is a finite set of variables, Σ is a finite set of terminals (disjoint from V), R is a set of production rules A → α where A ∈ V and α ∈ (V ∪ Σ)*, and S ∈ V is the start symbol.</div>
+      <p>A grammar is in <strong>simplified form</strong> when it contains no useless symbols, no null (ε) productions (except possibly S → ε if ε is in the language), and no unit productions. Simplification is a prerequisite for converting grammars to normal forms like CNF or GNF.</p>
+      <p>The order of simplification always matters: useless symbols first, then null productions, then unit productions. Changing the order can leave the grammar in an incorrect state.</p>
+    </div>
+
+    <div class="theory-card">
+      <h3><span class="t-num">1</span> Removing Useless Symbols</h3>
+      <p>A symbol X is <em>useless</em> if it is non-generating or unreachable. Two sub-passes are required and must run in order:</p>
+      <ul>
+        <li><strong>Generating:</strong> X can derive a string of only terminals.</li>
+        <li><strong>Reachable:</strong> X can be derived from S through some sequence of productions.</li>
+      </ul>
+      <div class="algo-box">Pass 1 — Generating:
+  generating = {}
+  repeat until no change:
+    for each rule A → α:
+      if all symbols in α are terminals
+         or already generating:
+        add A to generating
+  remove non-generating symbols
+
+Pass 2 — Reachable:
+  reachable = {S}
+  BFS/DFS from S through productions
+  remove unreachable symbols</div>
+    </div>
+
+    <div class="theory-card">
+      <h3><span class="t-num">2</span> Removing Null Productions</h3>
+      <p>A null production is A → ε. To eliminate them without changing the language:</p>
+      <ul>
+        <li>Find all <em>nullable</em> variables (those that derive ε directly or transitively).</li>
+        <li>For each rule, add all combinations where nullable variables are optionally dropped.</li>
+        <li>Remove all ε-rules from the grammar.</li>
+      </ul>
+      <div class="algo-box">nullable = {}
+repeat until no change:
+  for each rule A → α:
+    if α = ε, or every symbol in α
+       is already nullable:
+      add A to nullable
+
+For each rule A → X₁X₂…Xₙ:
+  generate all 2ⁿ combinations
+  where nullable Xᵢ may be dropped
+  (excluding the empty combination)</div>
+    </div>
+
+    <div class="theory-card">
+      <h3><span class="t-num">3</span> Removing Unit Productions</h3>
+      <p>A unit production is A → B where B is a single variable. Removed via unit-pair closure:</p>
+      <ul>
+        <li>(A, B) is a unit pair if A ⟹* B using only unit rules.</li>
+        <li>For each unit pair (A, B), add all non-unit productions of B directly to A.</li>
+        <li>Remove all unit productions from the grammar.</li>
+      </ul>
+      <div class="algo-box">unit_pairs(A) = {A}  for each A
+repeat until no change:
+  for each rule A → B (unit rule):
+    unit_pairs(A) ∪= unit_pairs(B)
+
+For each (A, B) in unit_pairs:
+  for each non-unit rule B → α:
+    add A → α to grammar
+Remove all A → B rules</div>
+    </div>
+
+    <div class="theory-card theory-full">
+      <h3>Why Order Matters</h3>
+      <div class="two-col">
+        <div>
+          <p><strong>Correct order: Useless → Null → Unit</strong></p>
+          <ul>
+            <li>Removing null productions can <em>create new unit productions</em> (e.g. A → BC where B is nullable produces A → C, a unit production).</li>
+            <li>Removing unit productions first can leave ε-rules that later expand into new unit productions, undoing the work.</li>
+            <li>Removing useless symbols first reduces the grammar, preventing unnecessary expansion of nullable combinations during step 2.</li>
+          </ul>
+        </div>
+        <div>
+          <p><strong>Concrete example of order dependency:</strong></p>
+          <div class="algo-box">Original:
+S → AB,  A → aA | ε,  B → b
+
+After null removal (step 2):
+S → AB | B    ← new unit prod!
+A → aA
+B → b
+
+Then unit removal (step 3) handles
+S → B by substituting: S → b</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CORE GRAMMAR FUNCTIONS
+   ═══════════════════════════════════════════ */
+function parseGrammar(input) {
+  let rules = {};
+  input.split("\n").forEach(line => {
+    if (!line.trim()) return;
+    let parts = line.split("->").map(s => s.trim());
+    if (parts.length < 2) return;
+    rules[parts[0]] = parts[1].split("|").map(r => r.trim());
+  });
+  return rules;
+}
+
+function printGrammar(g) {
+  let out = "";
+  for (let k in g)
+    if (g[k] && g[k].length > 0)
+      out += k + "  \u2192  " + g[k].join("  |  ") + "\n";
+  return out;
+}
+
+function removeUseless(grammar) {
+  let generating = new Set();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in grammar) {
+      for (let prod of grammar[A]) {
+        let valid = true;
+        for (let c of prod) { if (grammar[c] && !generating.has(c)) { valid = false; break; } }
+        if (valid && !generating.has(A)) { generating.add(A); changed = true; }
+      }
+    }
+  }
+  let genF = {};
+  for (let A in grammar)
+    if (generating.has(A))
+      genF[A] = grammar[A].filter(p => [...p].every(c => !grammar[c] || generating.has(c)));
+
+  let reachable = new Set(["S"]), queue = ["S"];
+  while (queue.length) {
+    let cur = queue.shift();
+    if (!genF[cur]) continue;
+    for (let prod of genF[cur])
+      for (let c of prod)
+        if (genF[c] && !reachable.has(c)) { reachable.add(c); queue.push(c); }
+  }
+  let final = {};
+  for (let A of reachable) if (genF[A]) final[A] = genF[A];
+  return final;
+}
+
+function removeNull(grammar) {
+  let nullable = new Set();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in grammar)
+      for (let prod of grammar[A]) {
+        let isNull = prod === "\u03b5" || [...prod].every(c => nullable.has(c));
+        if (isNull && !nullable.has(A)) { nullable.add(A); changed = true; }
+      }
+  }
+  let newG = {};
+  for (let A in grammar) {
+    newG[A] = new Set();
+    for (let prod of grammar[A]) {
+      if (prod === "\u03b5") continue;
+      generateCombinations(prod, nullable).forEach(c => newG[A].add(c || "\u03b5"));
+    }
+  }
+  for (let A in newG) newG[A] = [...newG[A]];
+  return newG;
+}
+
+function generateCombinations(prod, nullable) {
+  let results = [""];
+  for (let c of prod) {
+    let temp = [];
+    for (let r of results) {
+      temp.push(r + c);
+      if (nullable.has(c)) temp.push(r);
+    }
+    results = temp;
+  }
+  return [...new Set(results)];
+}
+
+function removeUnit(grammar) {
+  let unitPairs = {};
+  for (let A in grammar) unitPairs[A] = new Set([A]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in grammar)
+      for (let prod of grammar[A])
+        if (grammar[prod])
+          for (let x of unitPairs[prod])
+            if (!unitPairs[A].has(x)) { unitPairs[A].add(x); changed = true; }
+  }
+  let newG = {};
+  for (let A in grammar) {
+    newG[A] = new Set();
+    for (let B of unitPairs[A])
+      for (let prod of grammar[B])
+        if (!grammar[prod]) newG[A].add(prod);
+  }
+  for (let A in newG) newG[A] = [...newG[A]];
+  return newG;
+}
+
+/* ═══════════════════════════════════════════
+   ANALYSIS HELPERS
+   ═══════════════════════════════════════════ */
+function findNullable(g) {
+  let nullable = new Set(), changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in g)
+      for (let prod of g[A]) {
+        let isNull = prod === "\u03b5" || [...prod].every(c => nullable.has(c));
+        if (isNull && !nullable.has(A)) { nullable.add(A); changed = true; }
+      }
+  }
+  return nullable;
+}
+
+function findNonGenerating(g) {
+  let generating = new Set(), changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in g)
+      for (let prod of g[A]) {
+        let valid = true;
+        for (let c of prod) { if (g[c] && !generating.has(c)) { valid = false; break; } }
+        if (valid && !generating.has(A)) { generating.add(A); changed = true; }
+      }
+  }
+  return Object.keys(g).filter(k => !generating.has(k));
+}
+
+function findUnreachable(g) {
+  // first filter to generating only
+  let generating = new Set(), changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in g)
+      for (let prod of g[A]) {
+        let valid = true;
+        for (let c of prod) { if (g[c] && !generating.has(c)) { valid = false; break; } }
+        if (valid && !generating.has(A)) { generating.add(A); changed = true; }
+      }
+  }
+  let genF = {};
+  for (let A in g)
+    if (generating.has(A))
+      genF[A] = g[A].filter(p => [...p].every(c => !g[c] || generating.has(c)));
+
+  let reachable = new Set(["S"]), queue = ["S"];
+  while (queue.length) {
+    let cur = queue.shift();
+    if (!genF[cur]) continue;
+    for (let prod of genF[cur])
+      for (let c of prod)
+        if (genF[c] && !reachable.has(c)) { reachable.add(c); queue.push(c); }
+  }
+  return Object.keys(genF).filter(k => !reachable.has(k));
+}
+
+function findUnitProductions(g) {
+  let units = [];
+  for (let A in g)
+    for (let prod of g[A])
+      if (g[prod]) units.push({ from: A, to: prod });
+  return units;
+}
+
+/* ═══════════════════════════════════════════
+   TRACE HTML BUILDERS
+   ═══════════════════════════════════════════ */
+function chip(text, cls) {
+  return `<span class="chip ${cls}">${text}</span>`;
+}
+
+function findingRow(icon, html, extra) {
+  return `<div class="finding${extra ? ' ' + extra : ''}">
+    <span class="fi-icon">${icon}</span>
+    <div class="fi-text">${html}</div>
+  </div>`;
+}
+
+function buildTrace_Step1(g0, g1) {
+  let nonGen = findNonGenerating(g0);
+  let unreachable = findUnreachable(g0);
+  let removed = [...new Set([...nonGen, ...unreachable])];
+
+  // All vars with generating status
+  let generating = new Set(), changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in g0)
+      for (let prod of g0[A]) {
+        let valid = true;
+        for (let c of prod) { if (g0[c] && !generating.has(c)) { valid = false; break; } }
+        if (valid && !generating.has(A)) { generating.add(A); changed = true; }
+      }
+  }
+
+  let findings = [];
+
+  // Pass 1
+  let genChips = Object.keys(g0).map(v =>
+    chip(v + (generating.has(v) ? ' ✓' : ' ✗'), generating.has(v) ? 'kept' : 'removed')
+  ).join('');
+  findings.push(findingRow('1a',
+    `<strong>Pass 1 — Generating variables</strong><br>
+     A variable generates if it can eventually produce only terminals.<br>
+     <div class="fi-chips">${genChips}</div>`
+  ));
+
+  if (nonGen.length === 0)
+    findings.push(findingRow('✓', 'All variables are generating — none removed in pass 1.', 'success'));
+  else
+    findings.push(findingRow('✗',
+      `<strong>Non-generating removed:</strong><div class="fi-chips">${nonGen.map(v=>chip(v,'removed')).join('')}</div>`
+    ));
+
+  // Pass 2
+  // reachable after gen-filter
+  let genF = {};
+  for (let A in g0)
+    if (generating.has(A))
+      genF[A] = g0[A].filter(p => [...p].every(c => !g0[c] || generating.has(c)));
+  let reachable = new Set(["S"]), q2 = ["S"];
+  while (q2.length) {
+    let cur = q2.shift();
+    if (!genF[cur]) continue;
+    for (let prod of genF[cur])
+      for (let c of prod)
+        if (genF[c] && !reachable.has(c)) { reachable.add(c); q2.push(c); }
+  }
+  let reachChips = Object.keys(genF).map(v =>
+    chip(v + (reachable.has(v) ? ' ✓' : ' ✗'), reachable.has(v) ? 'kept' : 'removed')
+  ).join('');
+  findings.push(findingRow('1b',
+    `<strong>Pass 2 — Reachable variables from S</strong><br>
+     BFS from S through all productions.<br>
+     <div class="fi-chips">${reachChips}</div>`
+  ));
+
+  if (unreachable.length === 0)
+    findings.push(findingRow('✓', 'All remaining variables are reachable — none removed in pass 2.', 'success'));
+  else
+    findings.push(findingRow('✗',
+      `<strong>Unreachable removed:</strong><div class="fi-chips">${unreachable.map(v=>chip(v,'removed')).join('')}</div>`
+    ));
+
+  if (removed.length === 0)
+    findings.push(findingRow('✓', '<strong>No changes.</strong> Grammar already has no useless symbols.', 'success'));
+  else
+    findings.push(findingRow('→',
+      `<strong>Total symbols removed:</strong><div class="fi-chips">${removed.map(v=>chip(v,'removed')).join('')}</div>`
+    ));
+
+  return buildTraceCard('s1', '1', 'Step 1 — Remove Useless Symbols',
+    `${removed.length} symbol(s) removed`, g0, g1, findings);
+}
+
+function buildTrace_Step2(g1, g2) {
+  let nullable = findNullable(g1);
+  let findings = [];
+
+  if (nullable.size === 0) {
+    findings.push(findingRow('✓',
+      '<strong>No nullable variables found.</strong> Grammar has no ε-productions — unchanged.', 'success'));
+  } else {
+    findings.push(findingRow('ε',
+      `<strong>Nullable variables identified</strong><br>
+       These can derive ε directly or transitively.<br>
+       <div class="fi-chips">${[...nullable].map(v=>chip(v+' ⟹ ε','nullable')).join('')}</div>`
+    ));
+
+    // Per-rule expansion
+    let expRows = '';
+    for (let A in g1) {
+      g1[A].forEach(prod => {
+        if (prod === '\u03b5') return;
+        if (![...prod].some(c => nullable.has(c))) return;
+        let combos = generateCombinations(prod, nullable).filter(c => c !== '');
+        expRows += `<div class="expand-row">${A} \u2192 ${prod}<span class="expand-arrow">expands to</span>${combos.join(',  ')}</div>`;
+      });
+    }
+    if (expRows)
+      findings.push(findingRow('↓',
+        `<strong>Rules rewritten — nullable variables dropped in all combinations:</strong>
+         <div style="margin-top:8px;">${expRows}</div>`
+      ));
+
+    findings.push(findingRow('✗',
+      `<strong>All A \u2192 \u03b5 rules removed</strong> after generating new combinations.`
+    ));
+  }
+
+  return buildTraceCard('s2', '2', 'Step 2 — Remove Null Productions',
+    `${nullable.size} nullable variable(s)`, g1, g2, findings);
+}
+
+function buildTrace_Step3(g2, g3) {
+  let units = findUnitProductions(g2);
+
+  // unit pair closure
+  let unitPairs = {};
+  for (let A in g2) unitPairs[A] = new Set([A]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let A in g2)
+      for (let prod of g2[A])
+        if (g2[prod])
+          for (let x of unitPairs[prod])
+            if (!unitPairs[A].has(x)) { unitPairs[A].add(x); changed = true; }
+  }
+
+  let findings = [];
+
+  if (units.length === 0) {
+    findings.push(findingRow('✓',
+      '<strong>No unit productions found.</strong> Grammar already has no A \u2192 B rules — unchanged.', 'success'));
+  } else {
+    findings.push(findingRow('→',
+      `<strong>Unit productions identified</strong><br>
+       Rules of the form A \u2192 B where B is a single variable.<br>
+       <div class="fi-chips">${units.map(u=>chip(u.from+' \u2192 '+u.to,'new')).join('')}</div>`
+    ));
+
+    let closureChips = Object.entries(unitPairs)
+      .filter(([,set]) => set.size > 1)
+      .map(([A,set]) => chip('UNIT('+A+') = {'+[...set].join(', ')+'}','neutral'))
+      .join('');
+    if (closureChips)
+      findings.push(findingRow('⊇',
+        `<strong>Unit-pair closure computed</strong><br>
+         If A \u21D2* B via unit rules, non-unit productions of B are added to A.<br>
+         <div class="fi-chips">${closureChips}</div>`
+      ));
+
+    let substRows = '';
+    for (let A in g2) {
+      unitPairs[A].forEach(B => {
+        if (B === A) return;
+        let added = (g2[B] || []).filter(p => !g2[p]);
+        if (added.length > 0)
+          substRows += `<div class="expand-row">${A} absorbs <span style="font-weight:600;">${B}</span><span class="expand-arrow">\u2192</span>${added.join(',  ')}</div>`;
+      });
+    }
+    if (substRows)
+      findings.push(findingRow('↓',
+        `<strong>Productions substituted in:</strong><div style="margin-top:8px;">${substRows}</div>`
+      ));
+
+    findings.push(findingRow('✗', '<strong>All unit productions removed</strong> after substitution.'));
+  }
+
+  // Final summary
+  let finalVars = Object.keys(g3).length;
+  findings.push(findingRow('✓',
+    `<strong>Simplification complete.</strong> Grammar now has no useless symbols, no null productions, and no unit productions. Final grammar has <strong>${finalVars} variable(s)</strong>.`,
+    'success'
+  ));
+
+  return buildTraceCard('s3', '3', 'Step 3 — Remove Unit Productions',
+    `${units.length} unit production(s) removed`, g2, g3, findings);
+}
+
+function buildTraceCard(sClass, badge, title, meta, gBefore, gAfter, findings) {
+  let findingsHtml = findings.map(f => f).join('');
+  return `
+  <div class="trace-block" id="trace-${sClass}">
+    <div class="tb-header ${sClass}">
+      <div class="tb-badge ${sClass}">${badge}</div>
+      <div class="tb-title">${title}</div>
+      <div class="tb-meta">${meta}</div>
+    </div>
+    <div class="tb-body">
+      <div class="tb-findings">${findingsHtml}</div>
+      <div class="tb-div"></div>
+      <div class="diff-row">
+        <div class="diff-box">
+          <div class="diff-head before">Before step ${badge}</div>
+          <div class="diff-body">${printGrammar(gBefore)||'(empty)'}</div>
+        </div>
+        <div class="diff-box">
+          <div class="diff-head after">After step ${badge}</div>
+          <div class="diff-body">${printGrammar(gAfter)||'(empty)'}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION HELPERS
+   ═══════════════════════════════════════════ */
+function animateTraceBlock(blockEl) {
+  // slight delay then reveal the card
+  setTimeout(() => {
+    blockEl.classList.add('revealed');
+    // stagger the finding rows inside
+    let rows = blockEl.querySelectorAll('.finding');
+    rows.forEach((row, i) => {
+      setTimeout(() => row.classList.add('shown'), 120 + i * 80);
+    });
+  }, 60);
+}
+
+function animateOutput(text) {
+  let pre = document.getElementById('output');
+  pre.classList.remove('fade-in');
+  // force reflow
+  void pre.offsetWidth;
+  pre.classList.add('fade-in');
+}
+
+/* ═══════════════════════════════════════════
+   MAIN STEP RUNNER
+   ═══════════════════════════════════════════ */
+const stepLabels = {
+  1: 'Useless symbols removed',
+  2: 'Null productions removed',
+  3: 'Unit productions removed',
+  all: 'Fully simplified'
+};
+
+function runStep(n) {
+  // Button state
+  [1,2,3].forEach(i => document.getElementById('btn'+i).classList.remove('active'));
+  document.getElementById('btn'+n).classList.add('active');
+
+  let g = parseGrammar(document.getElementById('grammarInput').value);
+  let g1 = removeUseless(g);
+  let g2 = removeNull(g1);
+  let g3 = removeUnit(g2);
+
+  // Output
+  let result = n===1 ? g1 : n===2 ? g2 : g3;
+  let out = printGrammar(result);
+  let pre = document.getElementById('output');
+  let tag = document.getElementById('outputTag');
+  pre.innerHTML = out ? out : '<span class="placeholder">No productions remain after this step.</span>';
+  tag.textContent = stepLabels[n];
+  tag.className = 'output-tag done';
+  animateOutput();
+
+  // Build trace — only up to the selected step
+  let traceHTML = '';
+  if (n >= 1) traceHTML += buildTrace_Step1(g, g1);
+  if (n >= 2) traceHTML += buildTrace_Step2(g1, g2);
+  if (n >= 3) traceHTML += buildTrace_Step3(g2, g3);
+
+  let panel = document.getElementById('tracePanel');
+  panel.innerHTML = traceHTML;
+
+  // Animate each block in sequence
+  let blocks = panel.querySelectorAll('.trace-block');
+  blocks.forEach((block, i) => {
+    setTimeout(() => animateTraceBlock(block), i * 180);
+  });
+}
+
+function runAllSteps() {
+  [1,2,3].forEach(i => document.getElementById('btn'+i).classList.remove('active'));
+
+  let g = parseGrammar(document.getElementById('grammarInput').value);
+  let g1 = removeUseless(g);
+  let g2 = removeNull(g1);
+  let g3 = removeUnit(g2);
+
+  let out = printGrammar(g3);
+  let pre = document.getElementById('output');
+  let tag = document.getElementById('outputTag');
+  pre.innerHTML = out ? out : '<span class="placeholder">No productions remain.</span>';
+  tag.textContent = stepLabels.all;
+  tag.className = 'output-tag done';
+  animateOutput();
+
+  let panel = document.getElementById('tracePanel');
+  panel.innerHTML =
+    buildTrace_Step1(g, g1) +
+    buildTrace_Step2(g1, g2) +
+    buildTrace_Step3(g2, g3);
+
+  let blocks = panel.querySelectorAll('.trace-block');
+  blocks.forEach((block, i) => {
+    setTimeout(() => animateTraceBlock(block), i * 200);
+  });
+}
+
+function clearAll() {
+  [1,2,3].forEach(i => document.getElementById('btn'+i).classList.remove('active'));
+  document.getElementById('output').innerHTML = '<span class="placeholder">Select a step above, or click "Run All Steps".</span>';
+  document.getElementById('outputTag').textContent = 'waiting';
+  document.getElementById('outputTag').className = 'output-tag';
+  document.getElementById('tracePanel').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════
+   EXAMPLES
+   ═══════════════════════════════════════════ */
+const examples = [
+  "S -> AB | a\nA -> aA | ε\nB -> b",
+  "S -> A | b\nA -> B | a\nB -> ab",
+  "S -> AB | a\nA -> aA | ε\nB -> b\nC -> D\nD -> ε\nE -> aE",
+  "S -> AB | C\nA -> aA | ε\nB -> bB | ε\nC -> c\nD -> d"
+];
+
+function loadExample(i) {
+  document.getElementById('grammarInput').value = examples[i];
+  clearAll();
+}
+
+/* ═══════════════════════════════════════════
+   TAB NAV
+   ═══════════════════════════════════════════ */
+function showTab(name, el) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+}
+</script>
 </body>
 </html>
