@@ -22,8 +22,9 @@ function printGrammar(g) {
   return out;
 }
 
-/* STEP 1: REMOVE USELESS SYMBOLS */
+/* STEP 1: REMOVE USELESS SYMBOLS (GENERATING + REACHABLE) */
 function removeUseless(grammar) {
+  // ---- GENERATING ----
   let generating = new Set();
   let changed = true;
 
@@ -46,16 +47,41 @@ function removeUseless(grammar) {
     }
   }
 
-  let filtered = {};
+  let genFiltered = {};
   for (let A in grammar) {
     if (generating.has(A)) {
-      filtered[A] = grammar[A].filter(p =>
+      genFiltered[A] = grammar[A].filter(p =>
         [...p].every(c => !grammar[c] || generating.has(c))
       );
     }
   }
 
-  return filtered;
+  // ---- REACHABLE ----
+  let reachable = new Set(["S"]);
+  let queue = ["S"];
+
+  while (queue.length) {
+    let current = queue.shift();
+    if (!genFiltered[current]) continue;
+
+    for (let prod of genFiltered[current]) {
+      for (let c of prod) {
+        if (genFiltered[c] && !reachable.has(c)) {
+          reachable.add(c);
+          queue.push(c);
+        }
+      }
+    }
+  }
+
+  let finalGrammar = {};
+  for (let A of reachable) {
+    if (genFiltered[A]) {
+      finalGrammar[A] = genFiltered[A];
+    }
+  }
+
+  return finalGrammar;
 }
 
 /* STEP 2: REMOVE NULL PRODUCTIONS */
@@ -158,34 +184,39 @@ function removeUnit(grammar) {
   return newGrammar;
 }
 
-/* STEP EXECUTION */
+/* FINAL STEP EXECUTION (SEQUENTIAL — FIXED) */
 function runStep(n) {
-  // remove active state
   [1, 2, 3].forEach(i =>
     document.getElementById("btn" + i).classList.remove("active")
   );
-
-  // set active
   document.getElementById("btn" + n).classList.add("active");
 
   let g = parseGrammar(document.getElementById("grammarInput").value);
 
-  let result =
-    n === 1 ? removeUseless(g) :
-    n === 2 ? removeNull(g) :
-    removeUnit(g);
+  let result;
+
+  if (n === 1) {
+    result = removeUseless(g);
+  } 
+  else if (n === 2) {
+    let g1 = removeUseless(g);
+    result = removeNull(g1);
+  } 
+  else {
+    let g1 = removeUseless(g);
+    let g2 = removeNull(g1);
+    result = removeUnit(g2);
+  }
 
   let out = printGrammar(result);
 
   let pre = document.getElementById("output");
   let tag = document.getElementById("outputTag");
 
-  // update output
   pre.innerHTML = out
     ? out
     : '<span class="placeholder">No productions remain after this step.</span>';
 
-  // update tag (fix for "waiting")
   const stepNames = {
     1: "Useless symbols removed",
     2: "Null productions removed",
